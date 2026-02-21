@@ -1,18 +1,18 @@
 [
   {
-    "id": 1,
-    "name": "Nahid Bin Wadood",
-    "email": "nahidbinwadood@gmail.com"
-  },
-  {
-    "id": 2,
-    "name": "Nahid",
-    "email": "nahidbin21@gmail.com",
-    "age": 26
-  },
-  {
     "id": 3,
-    "name": "Nahid",
-    "email": "nahidbin221@gmail.com"
+    "name": "Nahidbinwadood",
+    "email": "nahidbinwadood@gmail.com",
+    "age": 22
+  },
+  {
+    "id": 4,
+    "name": "Pranta",
+    "email": "prantadas@gmail.com"
+  },
+  {
+    "id": 5,
+    "name": "Nabil",
+    "email": "arafatkabir@gmail.com"
   }
 ]

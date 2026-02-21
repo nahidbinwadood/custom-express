@@ -70,4 +70,92 @@ app.post('/users', async (req: IncomingMessage, res: ServerResponse) => {
   }
 });
 
+app.delete('/users', async (req: IncomingMessage, res: ServerResponse) => {
+  const { id } = (req as any).query;
+
+  if (!id) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: 400,
+      message: 'Id is missing',
+    });
+  }
+  if (Number.isNaN(Number(id))) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: 400,
+      message: 'Invalid Id is provided',
+    });
+  }
+
+  const users: IUser[] = await getUsers();
+  const userIndex = users.findIndex((item) => item?.id === Number(id));
+
+  console.log({ userIndex });
+
+  if (userIndex === -1) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: 400,
+      message: 'User not found',
+    });
+  }
+
+  users.splice(userIndex, 1);
+
+  await writeUsers(users);
+
+  return sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'User Deleted Successfully',
+    data: users,
+  });
+});
+
+app.patch('/users', async (req: IncomingMessage, res: ServerResponse) => {
+  const { id } = (req as any).query;
+  const payload = (req as any).body;
+
+  if (!id) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: 400,
+      message: 'User id is required',
+    });
+  }
+
+  if (Number.isNaN(Number(id))) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: 400,
+      message: 'Invalid user id provided',
+    });
+  }
+
+  const users: IUser[] = await getUsers();
+  const userIndex = users?.findIndex((item) => item?.id === Number(id));
+
+  if (userIndex === -1) {
+    return sendResponse(res, {
+      success: false,
+      statusCode: 400,
+      message: 'User Not found',
+    });
+  }
+
+  users[userIndex] = {
+    ...users[userIndex],
+    ...payload,
+  };
+
+  await writeUsers(users);
+  return sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'User updated successfully',
+    data: users,
+  });
+});
+
 export default app;

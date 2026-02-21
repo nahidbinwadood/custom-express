@@ -42,8 +42,9 @@ const express = () => {
     use(middlewares: TGlobalMiddleware | TGlobalErrorMiddleware) {
       if (middlewares.length === 4) {
         globalErrorMiddlewares.push(middlewares as TGlobalErrorMiddleware);
+      } else {
+        globalMiddlewares.push(middlewares as TGlobalMiddleware);
       }
-      globalMiddlewares.push(middlewares as TGlobalMiddleware);
     },
 
     /**
@@ -157,6 +158,9 @@ const express = () => {
     async routeHandler(req: IncomingMessage, res: ServerResponse) {
       const parsedUrl = url.parse(req.url || '', true);
       const pathname = parsedUrl.pathname;
+      const query = parsedUrl.query;
+      (req as any).query = query;
+
       const method = req.method;
 
       const route = routes.find(
