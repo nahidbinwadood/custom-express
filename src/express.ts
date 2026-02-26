@@ -1,6 +1,7 @@
 import http, { IncomingMessage, ServerResponse } from 'http';
 import url from 'url';
 import { sendResponse } from './helpers/sendResponse';
+import { joinPaths } from './utils/join-paths';
 
 type TNextFunction = () => void;
 
@@ -9,7 +10,7 @@ type TRouteHandler = (req: IncomingMessage, res: ServerResponse) => void;
 interface IRoute {
   method: string;
   path: string;
-  handler: (TRouteHandler | TGlobalMiddleware)[];
+  handlers: (TRouteHandler | TGlobalMiddleware)[];
 }
 
 type TGlobalMiddleware = (
@@ -39,12 +40,20 @@ const express = () => {
      * Middleware Functions
      * @param middlewares : Middleware functions | Global Error Middleware
      */
-    use(middlewares: TGlobalMiddleware | TGlobalErrorMiddleware) {
-      if (middlewares.length === 4) {
-        globalErrorMiddlewares.push(middlewares as TGlobalErrorMiddleware);
-      } else {
-        globalMiddlewares.push(middlewares as TGlobalMiddleware);
-      }
+    // use(middlewares: TGlobalMiddleware | TGlobalErrorMiddleware) {
+    //   if (middlewares.length === 4) {
+    //     globalErrorMiddlewares.push(middlewares as TGlobalErrorMiddleware);
+    //   } else {
+    //     globalMiddlewares.push(middlewares as TGlobalMiddleware);
+    //   }
+    // },
+    use(basePath: string, customRouter: any) {
+      const prevRoutes = customRouter?._getRoutes();
+      const updatedRoutes = prevRoutes?.map((item: any) => ({
+        ...item,
+        path: joinPaths(basePath, item?.path),
+      }));
+      routes.push(...updatedRoutes);
     },
 
     /**
@@ -53,11 +62,11 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    get(path: string, ...handler: TRouteHandler[]) {
+    get(path: string, ...handlers: TRouteHandler[]) {
       routes.push({
         method: 'GET',
         path,
-        handler,
+        handlers,
       });
     },
 
@@ -67,11 +76,11 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    post(path: string, ...handler: TRouteHandler[]) {
+    post(path: string, ...handlers: TRouteHandler[]) {
       routes.push({
         method: 'POST',
         path,
-        handler,
+        handlers,
       });
     },
 
@@ -81,11 +90,11 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    delete(path: string, ...handler: TRouteHandler[]) {
+    delete(path: string, ...handlers: TRouteHandler[]) {
       routes.push({
         method: 'DELETE',
         path,
-        handler,
+        handlers,
       });
     },
 
@@ -95,11 +104,11 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    patch(path: string, ...handler: TRouteHandler[]) {
+    patch(path: string, ...handlers: TRouteHandler[]) {
       routes.push({
         method: 'PATCH',
         path,
-        handler,
+        handlers,
       });
     },
 
@@ -109,11 +118,11 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    put(path: string, ...handler: TRouteHandler[]) {
+    put(path: string, ...handlers: TRouteHandler[]) {
       routes.push({
         method: 'PUT',
         path,
-        handler,
+        handlers,
       });
     },
 
@@ -171,8 +180,8 @@ const express = () => {
         let index = 0;
 
         const next = async () => {
-          if (index < route.handler.length) {
-            const handler = route.handler[index];
+          if (index < route.handlers.length) {
+            const handler = route.handlers[index];
             index++;
 
             try {
