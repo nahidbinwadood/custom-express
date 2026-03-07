@@ -9,53 +9,65 @@ type THandler = (
   next: TNext
 ) => void;
 
+type TRouteHandler = (req: IncomingMessage, res: ServerResponse) => void;
+
 interface IRoutes {
   path: string;
   method: string;
   handlers: THandler[];
 }
 
+type Middleware = (
+  req: IncomingMessage,
+  res: ServerResponse,
+  next?: TNext
+) => void;
+
 export const Router = () => {
   const allRoutes: IRoutes[] = [];
   const router = {
-    use(basePath: string, customRouter: any) {
-      const prevRoutes = customRouter?._getRoutes();
-      const updatedRoutes = prevRoutes?.map((item: any) => ({
-        ...item,
-        path: joinPaths(basePath, item?.path),
-      }));
-      allRoutes.push(...updatedRoutes);
+    use(basePathOrMiddleware: string | Middleware, customRouter?: any) {
+      // this is custom router==>
+      if (typeof basePathOrMiddleware === 'string') {
+        const prevRoutes = customRouter?._getRoutes();
+        const updatedRoutes = prevRoutes?.map((item: any) => ({
+          ...item,
+          path: joinPaths(basePathOrMiddleware, item?.path),
+        }));
+
+        return allRoutes.push(...updatedRoutes);
+      }
     },
 
-    get(path: string, ...handlers: THandler[]) {
+    get(path: string, ...handlers: (THandler | TRouteHandler)[]) {
       allRoutes.push({
         method: 'GET',
         path,
         handlers,
       });
     },
-    post(path: string, ...handlers: THandler[]) {
+    post(path: string, ...handlers: (THandler | TRouteHandler)[]) {
       allRoutes.push({
         method: 'POST',
         path,
         handlers,
       });
     },
-    patch(path: string, ...handlers: THandler[]) {
+    patch(path: string, ...handlers: (THandler | TRouteHandler)[]) {
       allRoutes.push({
         method: 'PATCH',
         path,
         handlers,
       });
     },
-    put(path: string, ...handlers: THandler[]) {
+    put(path: string, ...handlers: (THandler | TRouteHandler)[]) {
       allRoutes.push({
         method: 'PUT',
         path,
         handlers,
       });
     },
-    delete(path: string, ...handlers: THandler[]) {
+    delete(path: string, ...handlers: (THandler | TRouteHandler)[]) {
       allRoutes.push({
         method: 'DELETE',
         path,

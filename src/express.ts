@@ -40,20 +40,33 @@ const express = () => {
      * Middleware Functions
      * @param middlewares : Middleware functions | Global Error Middleware
      */
-    // use(middlewares: TGlobalMiddleware | TGlobalErrorMiddleware) {
-    //   if (middlewares.length === 4) {
-    //     globalErrorMiddlewares.push(middlewares as TGlobalErrorMiddleware);
-    //   } else {
-    //     globalMiddlewares.push(middlewares as TGlobalMiddleware);
-    //   }
-    // },
-    use(basePath: string, customRouter: any) {
-      const prevRoutes = customRouter?._getRoutes();
-      const updatedRoutes = prevRoutes?.map((item: any) => ({
-        ...item,
-        path: joinPaths(basePath, item?.path),
-      }));
-      routes.push(...updatedRoutes);
+
+    use(
+      basePathOrMiddleware: string | TGlobalMiddleware | TGlobalErrorMiddleware,
+      customRouter?: any
+    ) {
+      // this is custom router==>
+      if (typeof basePathOrMiddleware === 'string') {
+        const allRoutes = customRouter._getRoutes();
+
+        const updatedRoutes = allRoutes?.map((item: any) => ({
+          ...item,
+          path: joinPaths(basePathOrMiddleware, item?.path),
+        }));
+
+        return routes.push(...updatedRoutes);
+      }
+
+      // global middleware==>
+      if (basePathOrMiddleware.length === 4) {
+        // pushing the global error in the global middleware array==>
+        return globalErrorMiddlewares.push(
+          basePathOrMiddleware as TGlobalErrorMiddleware
+        );
+      }
+
+      // pushing the global middleware in the array==>
+      return globalMiddlewares.push(basePathOrMiddleware as TGlobalMiddleware);
     },
 
     /**
@@ -62,7 +75,7 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    get(path: string, ...handlers: TRouteHandler[]) {
+    get(path: string, ...handlers: (TRouteHandler | TGlobalMiddleware)[]) {
       routes.push({
         method: 'GET',
         path,
@@ -76,7 +89,7 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    post(path: string, ...handlers: TRouteHandler[]) {
+    post(path: string, ...handlers: (TRouteHandler | TGlobalMiddleware)[]) {
       routes.push({
         method: 'POST',
         path,
@@ -90,7 +103,7 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    delete(path: string, ...handlers: TRouteHandler[]) {
+    delete(path: string, ...handlers: (TRouteHandler | TGlobalMiddleware)[]) {
       routes.push({
         method: 'DELETE',
         path,
@@ -104,7 +117,7 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    patch(path: string, ...handlers: TRouteHandler[]) {
+    patch(path: string, ...handlers: (TRouteHandler | TGlobalMiddleware)[]) {
       routes.push({
         method: 'PATCH',
         path,
@@ -118,7 +131,7 @@ const express = () => {
      * @param handler - Route Handler
      */
 
-    put(path: string, ...handlers: TRouteHandler[]) {
+    put(path: string, ...handlers: (TRouteHandler | TGlobalMiddleware)[]) {
       routes.push({
         method: 'PUT',
         path,
@@ -149,7 +162,7 @@ const express = () => {
       const next = async (err?: any) => {
         // send to global error handler==>
         if (err) {
-          return this.errorHandler(err, req, res);
+          return await this.errorHandler(err, req, res);
         }
 
         // run the global middlewares
@@ -179,7 +192,11 @@ const express = () => {
       if (route) {
         let index = 0;
 
-        const next = async () => {
+        const next = async (error?: any) => {
+          if (error) {
+            return this.errorHandler(error, req, res);
+          }
+
           if (index < route.handlers.length) {
             const handler = route.handlers[index];
             index++;
