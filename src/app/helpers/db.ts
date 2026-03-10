@@ -1,7 +1,13 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const dbPath = path.join(process.cwd(), 'src', 'data', 'users.json');
+const dbPath = path.join(
+  process.cwd(),
+  'src',
+  'app',
+  'data',
+  'users.json'
+);
 
 export const getUsers = async () => {
   try {

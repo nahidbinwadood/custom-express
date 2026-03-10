@@ -1,10 +1,9 @@
 import { IncomingMessage, ServerResponse } from 'node:http';
-import { Router } from '../../router';
+import { Router } from '../../../express/core/router';
 import { getUsers, writeUsers } from '../../helpers/db';
 import { sendResponse } from '../../helpers/sendResponse';
 import { IUser } from '../../types';
 import { generateNewId } from '../../utils/generateNewId';
-import { AppError } from '../../errorHelpers/appError';
 
 const userRoutes = Router();
 
@@ -68,8 +67,8 @@ userRoutes.post('/', async (req: IncomingMessage, res: ServerResponse) => {
   }
 });
 
-userRoutes.delete('/', async (req: IncomingMessage, res: ServerResponse) => {
-  const { id } = (req as any).query;
+userRoutes.delete('/:id', async (req: IncomingMessage, res: ServerResponse) => {
+  const { id } = (req as any).params;
 
   if (!id) {
     return sendResponse(res, {
@@ -88,8 +87,6 @@ userRoutes.delete('/', async (req: IncomingMessage, res: ServerResponse) => {
 
   const users: IUser[] = await getUsers();
   const userIndex = users.findIndex((item) => item?.id === Number(id));
-
-  console.log({ userIndex });
 
   if (userIndex === -1) {
     return sendResponse(res, {

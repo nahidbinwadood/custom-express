@@ -1,5 +1,5 @@
 import { IncomingMessage, ServerResponse } from 'http';
-import { joinPaths } from './utils/join-paths';
+import { joinPaths } from '../utils/join-paths';
 
 type TNext = (error?: any) => void;
 
@@ -25,6 +25,9 @@ type Middleware = (
 
 export const Router = () => {
   const allRoutes: IRoutes[] = [];
+
+  const routerMiddlewares: Middleware[] = [];
+
   const router = {
     use(basePathOrMiddleware: string | Middleware, customRouter?: any) {
       // this is custom router==>
@@ -36,6 +39,11 @@ export const Router = () => {
         }));
 
         return allRoutes.push(...updatedRoutes);
+      }
+
+      // save to router middleware==>
+      if (typeof basePathOrMiddleware === 'function') {
+        routerMiddlewares.push(basePathOrMiddleware);
       }
     },
 
@@ -76,7 +84,12 @@ export const Router = () => {
     },
 
     _getRoutes() {
-      return allRoutes;
+      if (routerMiddlewares.length === 0) return allRoutes;
+
+      return allRoutes?.map((route) => ({
+        ...route,
+        handlers: [...routerMiddlewares, ...route.handlers],
+      }));
     },
   };
 

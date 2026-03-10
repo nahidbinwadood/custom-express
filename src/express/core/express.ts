@@ -1,7 +1,9 @@
 import http, { IncomingMessage, ServerResponse } from 'http';
 import url from 'url';
-import { sendResponse } from './helpers/sendResponse';
-import { joinPaths } from './utils/join-paths';
+import { sendResponse } from '../../app/helpers/sendResponse';
+import { joinPaths } from '../utils/join-paths';
+import { matchRoute } from '../utils/match-route';
+import { decorateFunction } from '../utils/decorate-response';
 
 type TNextFunction = () => void;
 
@@ -157,6 +159,10 @@ const express = () => {
     },
 
     async middlewareHandler(req: IncomingMessage, res: ServerResponse) {
+      // update the res (json,send,status and redirect)
+      decorateFunction(res);
+
+      // run the middleware
       let index = 0;
 
       const next = async (err?: any) => {
@@ -185,11 +191,23 @@ const express = () => {
 
       const method = req.method;
 
-      const route = routes.find(
-        (item) => item?.method === method && item?.path === pathname
-      );
+      let extractedParams: Record<string, string> = {};
+      const route = routes.find((item) => {
+        if (item?.method !== method) return false;
+
+        const params = matchRoute(item?.path, pathname);
+
+        if (params !== null) {
+          extractedParams = params;
+          return true;
+        }
+
+        return false;
+      });
 
       if (route) {
+        (req as any).params = extractedParams;
+
         let index = 0;
 
         const next = async (error?: any) => {
@@ -238,6 +256,39 @@ const express = () => {
         handler(error, req, res, next);
       };
       await next(err);
+    },
+
+    json() {
+      return (req: IncomingMessage, res: ServerResponse, next: () => void) => {
+        if (req.headers['content-type'] !== 'application/json') {
+          return next();
+        }
+
+        let body = '';
+        const method = req.method || '';
+
+        if (['POST', 'DELETE', 'PATCH', 'PUT'].includes(method)) {
+          req.on('data', (chunk: Buffer) => {
+            body = body + chunk.toString();
+          });
+
+          req.on('end', () => {
+            try {
+              const parsedBody = JSON.parse(body);
+              (req as any).body = parsedBody;
+              next();
+            } catch (error) {
+              return sendResponse(res, {
+                success: false,
+                statusCode: 400,
+                message: 'Failed to parse json',
+              });
+            }
+          });
+        } else {
+          next();
+        }
+      };
     },
   };
 

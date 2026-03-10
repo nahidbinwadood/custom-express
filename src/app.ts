@@ -1,13 +1,13 @@
 import { IncomingMessage, ServerResponse } from 'http';
-import express from './express';
-import { jsonParser } from './middlewares/jsonParser';
-import router from './routes';
-import { sendResponse } from './helpers/sendResponse';
-import globalErrorHandler from './middlewares/globalErrorHandler';
+import express from './express/core/express';
+import { jsonParser } from './app/middlewares/jsonParser';
+import router from './app/routes';
+import { sendResponse } from './app/helpers/sendResponse';
+import globalErrorHandler from './app/middlewares/globalErrorHandler';
 
 const app = express();
 
-app.use(jsonParser());
+app.use(app.json());
 
 app.use('/api/v1', router);
 
@@ -19,7 +19,6 @@ app.get('/', (req: IncomingMessage, res: ServerResponse) => {
   });
 });
 
-
-app.use(globalErrorHandler)
+app.use(globalErrorHandler);
 
 export default app;

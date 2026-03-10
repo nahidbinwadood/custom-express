@@ -1,11 +1,5 @@
 [
   {
-    "id": 3,
-    "name": "Nahidbinwadood",
-    "email": "nahidbinwadood@gmail.com",
-    "age": 22
-  },
-  {
     "id": 4,
     "name": "Pranta",
     "email": "prantadas@gmail.com"
@@ -24,5 +18,10 @@
     "id": 7,
     "name": "Parosh",
     "email": "muhaiminulsarker1@gmail.com"
+  },
+  {
+    "id": 8,
+    "name": "Parosh",
+    "email": "muhaiminulsarker12@gmail.com"
   }
 ]
